@@ -18,3 +18,6 @@ https://huggingface.co/spaces/lpnguyen/leslie-matrix
 pip install -r requirement.txt
 streamlit run discrete_continuous_population.py
 ```
+
+## Week 3-4-5
+Replicator equation and price equation
