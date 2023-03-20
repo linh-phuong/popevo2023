@@ -35,7 +35,9 @@ N_3(t) \\
 N_4(t)
 \end{pmatrix}
 $$
-where $F_1$, $F_2$, $F_3$, and $F_4$ are the fecundity that corresponds to age class 1, 2, 3, and 4. $s_1$, $s_2$, $s_3$, are the survival rate of age class 1, 2, and 3. Since the maximum age of this population is 4, survival rate of the age class 4 is 0.
+where $F_1$, $F_2$, $F_3$, and $F_4$ are the fecundity that corresponds to age class 1, 2, 3, and 4. 
+$s_1$, $s_2$, $s_3$, are the survival rate of age class 1, 2, and 3. 
+Since the maximum age of this population is 4, survival rate of the age class 4 is 0.
 
 Check it your self to see if this result is correct from the matrix multiplication above
 
@@ -48,7 +50,8 @@ $$
 \end{align*}
 $$
 
-In the following graphs, we always assume that only individuals from age 3 and age 4 can reproduce, there fore $F_1 = F_2 = 0$
+In the following graphs, we always assume that only individuals from age 3 and age 4 can reproduce, 
+there fore $F_1 = F_2 = 0$
 
 """
 )
@@ -121,9 +124,7 @@ with col1:
 with col2:
     st.altair_chart(
         alt.Chart(df)
-        .transform_fold(
-            ["fraction_age_1", "fraction_age_2", "fraction_age_3", "fraction_age_4"]
-        )
+        .transform_fold(["fraction_age_1", "fraction_age_2", "fraction_age_3", "fraction_age_4"])
         .transform_filter(alt.datum.value > 0)
         .mark_point()
         .encode(
@@ -154,9 +155,7 @@ lbd_df = pd.DataFrame(
         "leading_eigenval": [leading_lbd] * len(time[1:]),
     }
 )
-tt = alt.TitleParams(
-    r"lambda(t) and leading eigenvalue of Leslie matrix", anchor="middle"
-)
+tt = alt.TitleParams(r"lambda(t) and leading eigenvalue of Leslie matrix", anchor="middle")
 l1 = (
     alt.Chart(lbd_df, title=tt)
     .mark_point()
@@ -166,19 +165,17 @@ l2 = alt.Chart(lbd_df).mark_line().encode(x="Time", y="leading_eigenval")
 st.altair_chart(l1 + l2)
 
 st.header("Survivalship, life expectancy and R0")
-st.write(
-    r"The following table shows the survivalship until age x, life expectancy and $R_0$."
-)
+st.write(r"The following table shows the survivalship until age x, life expectancy and $R_0$.")
 
-l = np.array([1.0, s1, s1 * s2, s1 * s2 * s3])
+life_expt = np.array([1.0, s1, s1 * s2, s1 * s2 * s3])
 st.write(
     pd.DataFrame(
         dict(
-            Survivalship_until_age_1=[l[0]],
-            Survivalship_until_age_2=[l[1]],
-            Survivalship_until_age_3=[l[2]],
-            Survivalship_until_age_4=[l[3]],
-            Life_expectancy=[l.sum()],
+            Survivalship_until_age_1=[life_expt[0]],
+            Survivalship_until_age_2=[life_expt[1]],
+            Survivalship_until_age_3=[life_expt[2]],
+            Survivalship_until_age_4=[life_expt[3]],
+            Life_expectancy=[life_expt.sum()],
             R0=[np.sum([0, 0, f3 * s1 * s2, f4 * s1 * s2 * s3])],
         )
     )
