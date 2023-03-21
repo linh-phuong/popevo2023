@@ -1,14 +1,15 @@
 import streamlit as st
 from scipy.integrate import solve_ivp
-from dynamical_system import replicator_niche_overlap, replicator
+from dynamical_system import replicator
 import numpy as np
 import pandas as pd
 import altair as alt
+from tools import make_dataframe
 
 st.set_page_config(layout="wide")
 st.title("Replicator equation")
 
-st.header("Exponential growth population")
+st.header("1. Exponential growth population")
 
 st.markdown(
     r"""
@@ -24,7 +25,9 @@ $$
 \end{align*}
 $$
 
-where $\bar{r} = r_1 \frac{N_1}{N_{total}} + r_2 \frac{N_2}{N_{total}} + r_3 \frac{N_3}{N_{total}}$ is the average growth rate
+where $N_{total} = N_1 + N_2 + N_3$ is the total population density
+
+$\bar{r} = r_1 \frac{N_1}{N_{total}} + r_2 \frac{N_2}{N_{total}} + r_3 \frac{N_3}{N_{total}}$ is the average growth rate
 
 From Lion (2018), we could work out the dynamics for the frequency of the three types as followed
 
@@ -46,28 +49,23 @@ st.write(
 
 st.write("")
 
-r1 = st.sidebar.slider("Intrinsic growth rate of type 1", 0.0, 3.0, value=2.0, step=0.1)
-r2 = st.sidebar.slider("Intrinsic growth rate of type 2", 0.0, 3.0, value=2.2, step=0.1)
-r3 = st.sidebar.slider("Intrinsic growth rate of type 3", 0.0, 3.0, value=1.8, step=0.1)
+st.sidebar.write("The following parameters correspond to section 1, 2 and 3")
+r1 = st.sidebar.slider("Intrinsic growth rate of type 1",
+                       0.0, 3.0, value=2.0, step=0.1)
+r2 = st.sidebar.slider("Intrinsic growth rate of type 2",
+                       0.0, 3.0, value=2.2, step=0.1)
+r3 = st.sidebar.slider("Intrinsic growth rate of type 3",
+                       0.0, 3.0, value=1.8, step=0.1)
 
 ntotal = 0.3
 init = np.array([0.1 / ntotal, 0.1 / ntotal, 0.1 / ntotal, ntotal])
 
 pars = np.array([r1, r2, r3, 0])
 exp_sol = solve_ivp(
-    replicator_niche_overlap, (0, 50), init, args=(pars,), t_eval=np.arange(0, 50, 0.5)
+    replicator, (0, 50), init, args=(pars,), t_eval=np.arange(0, 50, 0.01)
 )
 
-df_exp = pd.DataFrame(
-    dict(
-        time=exp_sol.t,
-        type_1=exp_sol.y[0, :],
-        type_2=exp_sol.y[1, :],
-        type_3=exp_sol.y[2, :],
-        total=exp_sol.y[3, :],
-    )
-)
-
+df_exp = make_dataframe(exp_sol)
 
 col1, col2 = st.columns(2)
 
@@ -78,8 +76,8 @@ with col1:
         .mark_line()
         .encode(
             x="time",
-            y=alt.Y("value:Q", title="Population frequency"),
-            color=alt.Color("key:N", legend=alt.Legend(title="Frequency")),
+            y=alt.Y("value:Q", title="Frequency"),
+            color=alt.Color("key:N", legend=alt.Legend(title="")),
         )
     )
 
@@ -90,12 +88,13 @@ with col2:
         .mark_line()
         .encode(
             x="time",
-            y=alt.Y("value:Q", scale=alt.Scale(type="log"), title="Total population density"),
+            y=alt.Y("value:Q", scale=alt.Scale(type="log"),
+                    title="Total population density (log scale)"),
             color=alt.value("green"),
         )
     )
 
-st.header("Logistic growth without niche difference")
+st.header("2. Logistic growth without niche difference")
 
 st.markdown(
     r"""
@@ -138,23 +137,20 @@ but $\bar{r}$ is different from the exponential example
 st.write(
     "Try to vary the competition coefficient, what is changing? Do you see the differerence in the density dynamics?"
 )
-alpha = st.slider("Competition coefficient", 0.0, 1.0, value=0.2, step=0.1)
+
+st.write('')
+
+st.sidebar.write("The following parameter only corresponds to section 2")
+alpha = st.sidebar.slider("Competition coefficient",
+                          0.0, 1.0, value=0.2, step=0.1)
 
 pars_logi = np.array([r1, r2, r3, alpha])
 
 logi_sol = solve_ivp(
-    replicator_niche_overlap, (0, 50), init, args=(pars_logi,), t_eval=np.arange(0, 50, 0.5)
+    replicator, (0, 50), init, args=(pars_logi,), t_eval=np.arange(0, 50, 0.01)
 )
 
-df_logi = pd.DataFrame(
-    dict(
-        time=logi_sol.t,
-        type_1=logi_sol.y[0, :],
-        type_2=logi_sol.y[1, :],
-        type_3=logi_sol.y[2, :],
-        total=logi_sol.y[3, :],
-    )
-)
+df_logi = make_dataframe(logi_sol)
 
 
 col3, col4 = st.columns(2)
@@ -165,7 +161,7 @@ with col3:
         .transform_fold(["type_1", "type_2", "type_3"])
         .mark_line()
         .encode(
-            x="time", y="value:Q", color=alt.Color("key:N", legend=alt.Legend(title="Frequency"))
+            x="time", y=alt.Y("value:Q", title="Frequency"), color=alt.Color("key:N", legend=alt.Legend(title=""))
         )
     )
 
@@ -174,39 +170,70 @@ with col4:
         alt.Chart(df_logi)
         .transform_fold(["total"])
         .mark_line()
-        .encode(x="time", y="value:Q", color=alt.value("green"))
+        .encode(x="time", y=alt.Y("value:Q", title='Population density'), color=alt.value("green"))
     )
 
-st.header("Asymetric competitions create niche difference")
+st.header("3. Asymetric competitions create niche difference")
 
-a11 = st.slider("Intraspecific competition of type 1", 0.0, 2.0, value=1.0, step=0.1)
-a22 = st.slider("Intraspecific competition of type 2", 0.0, 2.0, value=1.0, step=0.1)
-a33 = st.slider("Intraspecific competition of type 3", 0.0, 2.0, value=1.0, step=0.1)
-tmax = st.slider("Integrate time", 50.0, 200.0, value=50.0, step=0.5)
+st.markdown(r'''
+This part also concern the dynamics of three types except that now we will include
+some asymetrical competitions
 
-pars_nichediff = np.array([r1, r2, r3, a11, 0.8, 0.8, 0.8, a22, 0.8, 0.8, 0.8, a33])
+The dynamics of population density are
+
+$$
+\begin{align*}
+& \frac{dN_1}{dt} =  (r_1 - \alpha_{11} N_1 - \alpha_{12} N_2 - \alpha_{13} N_3) N_1 \\
+& \frac{dN_2}{dt} = (r_2  - \alpha_{21} N_1 - \alpha_{22} N_2 - \alpha_{23} N_3) N_2\\
+& \frac{dN_3}{dt} = (r_3  - \alpha_{31} N_1 - \alpha_{32} N_2 - \alpha_{33} N_3) N_3 \\
+& \frac{dN_{total}}{dt} = \bar{r} N_{total}
+\end{align*}
+$$
+
+Here, 
+
+$$
+\begin{align*}
+\bar{r} = (r_1 - \alpha_{11} N_1 - \alpha_{12} N_2 - \alpha_{13} N_3) \frac{N_1}{N_{total}} +  
+(r_2  - \alpha_{21} N_1 - \alpha_{22} N_2 - \alpha_{23} N_3) \frac{N_2}{N_{total}} + 
+(r_3  - \alpha_{31} N_1 - \alpha_{32} N_2 - \alpha_{33} N_3) \frac{N_3}{N_{total}}
+\end{align*}
+$$
+
+which is different from the values in the exponential and the symmetric competition example
+''')
+
+st.write('''In this case, the competition between types are fixed at 0.8. 
+         You can vary the competition value within a type.
+         How are the results different from previous models?''')
+
+st.sidebar.write('The following parameters only correspond to section 3')
+a11 = st.sidebar.slider("Competition within type 1",
+                        0.0, 2.0, value=1.0, step=0.1)
+a22 = st.sidebar.slider("Competition within type 2",
+                        0.0, 2.0, value=1.0, step=0.1)
+a33 = st.sidebar.slider("Competition within type 3",
+                        0.0, 2.0, value=1.0, step=0.1)
+tmax = st.sidebar.slider("Integrate time", 50.0, 200.0, value=50.0, step=0.5)
+
+pars_nichediff = np.array(
+    [r1, r2, r3, a11, 0.8, 0.8, 0.8, a22, 0.8, 0.8, 0.8, a33])
 
 nichediff_sol = solve_ivp(
     replicator, (0, tmax), init, t_eval=np.arange(0, tmax, 0.1), args=(pars_nichediff,)
 )
 
 
-df_nd = pd.DataFrame(
-    dict(
-        time=nichediff_sol.t,
-        freq_type_1=nichediff_sol.y[0, :],
-        freq_type_2=nichediff_sol.y[1, :],
-        freq_type_3=nichediff_sol.y[2, :],
-        total=nichediff_sol.y[3, :],
-    )
-)
-
+df_nd = make_dataframe(nichediff_sol)
 
 st.altair_chart(
     alt.Chart(df_nd)
-    .transform_fold(["freq_type_1", "freq_type_2", "freq_type_3"])
+    .transform_fold(["type_1", "type_2", "type_3"])
     .mark_line()
-    .encode(x="time", y="value:Q", color="key:N")
+    .encode(x="time", y=alt.Y("value:Q", title='Frequency'),
+            color=alt.Color("key:N", legend=alt.Legend(title="")))
 )
 
+st.write('''The table below shows that frequency of the three types and the total population density at
+         the last 5 integration steps''')
 st.write(df_nd.tail(5))

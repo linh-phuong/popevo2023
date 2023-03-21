@@ -7,17 +7,17 @@ Difference between discrete and continuous time model
 Live demo
 https://huggingface.co/spaces/lpnguyen/continuous-discrete-time
 
-## Week 2
-Leslie matrix for structural population
-
-https://huggingface.co/spaces/lpnguyen/leslie-matrix
-
 ## Local development
 
 ```bash
 pip install -r requirement.txt
 streamlit run discrete_continuous_population.py
 ```
+
+## Week 2
+Leslie matrix for structural population
+
+https://huggingface.co/spaces/lpnguyen/leslie-matrix
 
 ## Week 3-4-5
 Replicator equation and price equation
