@@ -26,6 +26,6 @@ def replicator(t, n, pars):
     ntotal = n[-1]
     r = pars[0:nb_sp]
     A = pars[nb_sp:].reshape(nb_sp, nb_sp)
-    gr = r - A@freq
+    gr = r - A @ (freq * ntotal)
     gr_bar = sum(gr * freq)
     return list((gr - gr_bar) * freq) + [gr_bar * ntotal]
