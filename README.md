@@ -19,5 +19,7 @@ Leslie matrix for structural population
 
 https://huggingface.co/spaces/lpnguyen/leslie-matrix
 
-## Week 3-4-5
+## Week 3
 Replicator equation and price equation
+
+https://huggingface.co/spaces/lpnguyen/replicator-equation
