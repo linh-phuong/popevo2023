@@ -23,3 +23,14 @@ def replicator(t, n, pars):
         gr = r - competitions * ntotal
     gr_bar = sum(gr * freq)
     return list((gr - gr_bar) * freq) + [gr_bar * ntotal]
+
+
+def invasion_fitness(z, zm, pars):
+    n_res = z / pars
+    return zm - pars * n_res
+
+
+def invasion_fitness2(z, zm, pars):
+    alpha, beta = pars
+    n_res = (z - z**beta) / alpha
+    return zm - zm**beta - alpha * n_res
