@@ -25,6 +25,12 @@ def replicator(t, n, pars):
     return list((gr - gr_bar) * freq) + [gr_bar * ntotal]
 
 
-def invasion_fitness(zm, z, alpha):
-    n_res = z / alpha
-    return zm - alpha * n_res
+def invasion_fitness(z, zm, pars):
+    n_res = z / pars
+    return zm - pars * n_res
+
+
+def invasion_fitness2(z, zm, pars):
+    alpha, beta = pars
+    n_res = (z - z**beta) / alpha
+    return zm - zm**beta - alpha * n_res

@@ -1,6 +1,7 @@
 import altair as alt
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.express as px
 import numpy as np
 
 
@@ -62,7 +63,7 @@ def make_dataframe(raw_dat):
     return df
 
 
-def plot_3D_invfitness(trait, fitness, resident, color="Greens"):
+def plot_3D_invfitness(trait, fitness, resident, color="RdBu"):
     X, Y = np.meshgrid(trait, trait)
     f_projection = (np.min(fitness) - 2) * np.ones(fitness.shape)
     axis = dict(
@@ -80,7 +81,7 @@ def plot_3D_invfitness(trait, fitness, resident, color="Greens"):
         scene=dict(
             xaxis=dict(axis),
             yaxis=dict(axis),
-            zaxis=dict(axis, range=(-14, 14)),
+            zaxis=dict(axis, range=(-4, 4)),
             aspectratio=dict(x=1, y=1, z=1),
             xaxis_title="Resident trait",
             yaxis_title="Mutant trait",
@@ -94,7 +95,7 @@ def plot_3D_invfitness(trait, fitness, resident, color="Greens"):
         y=Y,
         z=f_projection,
         surfacecolor=(fitness > 0),
-        colorscale=color,
+        colorscale="Greens",
         showlegend=False,
         showscale=False,
     )
@@ -115,5 +116,101 @@ def plot_3D_invfitness(trait, fitness, resident, color="Greens"):
             slice,
         ],
         layout=layout,
+    )
+    return fig
+
+
+def plot_invasionfitness(zm, zlist, fitness_func, pars):
+    inv_fitness = fitness_func(zm, zlist, pars)
+
+    fig = px.line(
+        x=zlist, y=inv_fitness, labels={"x": "Mutant trait value (z)", "y": "Invasion fitness"}
+    )
+    fig.add_vline(x=zm, line_dash="dashdot")
+    fig.add_hline(y=0, line_dash="dash")
+    fig.update_layout(
+        title="Interactive invasion process",
+        xaxis=dict(range=[0, zlist[-1]], autorange=False),
+        yaxis=dict(range=[-2, 2], autorange=False),
+    )
+    return fig
+
+
+def make_interactive_video(z_start, z_end, step, zlist, fitness_func, pars):
+    inv_vid = []
+    for z_val in np.arange(z_start, z_end, step):
+        inv_vid.append(fitness_func(z_val, zlist, pars))
+    vid = go.Figure(
+        data=[
+            go.Line(x=zlist, y=fitness_func(z_start, zlist, pars), name="invasion fitness"),
+            go.Line(
+                x=zlist,
+                y=np.zeros(len(zlist)),
+                line=dict(color="black", width=1, dash="dash"),
+                name="Invasion threshold",
+            ),
+            go.Scatter(
+                x=[z_start] * 10,
+                y=np.linspace(-2, 2, 10),
+                mode="lines",
+                line=dict(color="black", dash="dashdot"),
+                name="Resident trait value",
+            ),
+        ],
+        layout=go.Layout(
+            title="Invasion process video",
+            xaxis=dict(range=[0, zlist[-1]], autorange=False),
+            yaxis=dict(range=[-2, 2], autorange=False),
+            xaxis_title="Mutant trait value",
+            updatemenus=[
+                dict(type="buttons", buttons=[dict(label="Play", method="animate", args=[None])])
+            ],
+        ),
+        frames=[
+            go.Frame(
+                data=[
+                    go.Line(x=zlist, y=i),
+                    go.Line(
+                        x=zlist,
+                        y=np.zeros(len(zlist)),
+                        line=dict(color="black", dash="dash"),
+                    ),
+                    go.Scatter(
+                        x=[z_val] * 10,
+                        y=np.linspace(-2, 2, 10),
+                        line=dict(color="black", dash="dashdot"),
+                        mode="lines",
+                    ),
+                ]
+            )
+            for i, z_val in zip(inv_vid, np.arange(z_start, z_end, step))
+        ],
+    )
+    return vid
+
+
+def plot_PIP(zlist, fitness_func, pars):
+    X, Y = np.meshgrid(zlist, zlist)
+    inv_fitness3D = fitness_func(X, Y, pars)
+    fig = go.Figure(
+        data=go.Contour(
+            x=zlist,
+            y=zlist,
+            z=inv_fitness3D,
+            colorscale="PRGn",
+            showscale=False,
+            contours=dict(
+                start=-20,
+                end=0,
+                size=10,
+            ),
+        )
+    )
+    fig.update_layout(
+        autosize=False,
+        width=400,
+        height=500,
+        xaxis_title="Resident trait",
+        yaxis_title="Mutant trait",
     )
     return fig
