@@ -24,7 +24,8 @@ def integrate(model, init, tmax, cg=None):
     t = 0
     t_series = [t]
     while t < tmax:
-        pop_t = model(population[-1], cg) if cg is not None else model(population[-1])
+        pop_t = model(
+            population[-1], cg) if cg is not None else model(population[-1])
         population.append(pop_t)
         t += 1
         t_series.append(t)
@@ -46,7 +47,8 @@ def make_plot(df, scale, title):
             color=alt.value("#1f77b4"),
         )
     )
-    l2 = alt.Chart(df).mark_line().encode(x="time", y="pop_continuous", color=alt.value("#ff7f0e"))
+    l2 = alt.Chart(df).mark_line().encode(
+        x="time", y="pop_continuous", color=alt.value("#ff7f0e"))
     return l1 + l2
 
 
@@ -63,7 +65,7 @@ def make_dataframe(raw_dat):
     return df
 
 
-def plot_3D_invfitness(trait, fitness, resident, color="RdBu"):
+def plot_3D_invfitness(trait, fitness, resident, range, color="RdBu"):
     X, Y = np.meshgrid(trait, trait)
     f_projection = (np.min(fitness) - 2) * np.ones(fitness.shape)
     axis = dict(
@@ -76,12 +78,12 @@ def plot_3D_invfitness(trait, fitness, resident, color="RdBu"):
 
     layout = go.Layout(
         autosize=False,
-        width=700,
-        height=600,
+        width=600,
+        height=500,
         scene=dict(
             xaxis=dict(axis),
             yaxis=dict(axis),
-            zaxis=dict(axis, range=(-4, 4)),
+            zaxis=dict(axis, range=range),
             aspectratio=dict(x=1, y=1, z=1),
             xaxis_title="Resident trait",
             yaxis_title="Mutant trait",
@@ -102,7 +104,7 @@ def plot_3D_invfitness(trait, fitness, resident, color="RdBu"):
     slice = go.Surface(
         x=x_projection,
         y=Y,
-        z=(fitness * 5),
+        z=(fitness * 1e5),
         surfacecolor=x_projection,
         colorscale="Greys",
         opacity=0.5,
@@ -120,29 +122,33 @@ def plot_3D_invfitness(trait, fitness, resident, color="RdBu"):
     return fig
 
 
-def plot_invasionfitness(zm, zlist, fitness_func, pars):
+def plot_invasionfitness(zm, zlist, fitness_func, pars, range):
     inv_fitness = fitness_func(zm, zlist, pars)
 
     fig = px.line(
-        x=zlist, y=inv_fitness, labels={"x": "Mutant trait value (z)", "y": "Invasion fitness"}
+        x=zlist, y=inv_fitness, labels={
+            "x": "Mutant trait value (z)", "y": "Invasion fitness"}
     )
     fig.add_vline(x=zm, line_dash="dashdot")
     fig.add_hline(y=0, line_dash="dash")
     fig.update_layout(
         title="Interactive invasion process",
         xaxis=dict(range=[0, zlist[-1]], autorange=False),
-        yaxis=dict(range=[-2, 2], autorange=False),
+        yaxis=dict(range=range, autorange=False), autosize=False,
+        width=450,
+        height=400
     )
     return fig
 
 
-def make_interactive_video(z_start, z_end, step, zlist, fitness_func, pars):
+def make_interactive_video(z_start, z_end, step, zlist, fitness_func, pars, range):
     inv_vid = []
     for z_val in np.arange(z_start, z_end, step):
         inv_vid.append(fitness_func(z_val, zlist, pars))
     vid = go.Figure(
         data=[
-            go.Line(x=zlist, y=fitness_func(z_start, zlist, pars), name="invasion fitness"),
+            go.Line(x=zlist, y=fitness_func(
+                z_start, zlist, pars), name="invasion fitness"),
             go.Line(
                 x=zlist,
                 y=np.zeros(len(zlist)),
@@ -158,12 +164,21 @@ def make_interactive_video(z_start, z_end, step, zlist, fitness_func, pars):
             ),
         ],
         layout=go.Layout(
-            title="Invasion process video",
+            title="Invasion process video", autosize=False,
+            width=550,
+            height=500,
             xaxis=dict(range=[0, zlist[-1]], autorange=False),
-            yaxis=dict(range=[-2, 2], autorange=False),
+            yaxis=dict(range=range, autorange=False),
             xaxis_title="Mutant trait value",
             updatemenus=[
-                dict(type="buttons", buttons=[dict(label="Play", method="animate", args=[None])])
+                dict(type="buttons", buttons=[
+                     dict(label="Play", method="animate", args=[None, {"frame": {"duration": 500, "redraw": False},
+                                                                       "fromcurrent": True, "transition": {"duration": 300,
+                                                                                                           "easing": "quadratic-in-out"}}]),
+                     dict(label="Pause", method="animate", args=[[None], {"frame": {"duration": 0, "redraw": False},
+                                                                          "mode": "immediate",
+                                                                          "transition": {"duration": 0}}])]),
+
             ],
         ),
         frames=[

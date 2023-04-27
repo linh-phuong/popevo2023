@@ -23,3 +23,7 @@ https://huggingface.co/spaces/lpnguyen/leslie-matrix
 Replicator equation and price equation
 
 https://huggingface.co/spaces/lpnguyen/replicator-equation
+
+## Week9
+Adaptive dynamics
+
