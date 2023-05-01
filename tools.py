@@ -139,9 +139,9 @@ def plot_invasionfitness(zm, zlist, fitness_func, pars, range):
     return fig
 
 
-def make_interactive_video(z_start, z_end, step, zlist, fitness_func, pars, range):
+def make_interactive_video(z_start, z_end, steps, zlist, fitness_func, pars, range):
     inv_vid = []
-    for z_val in np.arange(z_start, z_end, step):
+    for z_val in np.linspace(z_start, z_end, steps):
         inv_vid.append(fitness_func(z_val, zlist, pars))
     vid = go.Figure(
         data=[
@@ -161,7 +161,6 @@ def make_interactive_video(z_start, z_end, step, zlist, fitness_func, pars, rang
             ),
         ],
         layout=go.Layout(
-            title="Invasion process video",
             autosize=False,
             width=650,
             height=500,
@@ -217,7 +216,7 @@ def make_interactive_video(z_start, z_end, step, zlist, fitness_func, pars, rang
                     ),
                 ]
             )
-            for i, z_val in zip(inv_vid, np.arange(z_start, z_end, step))
+            for i, z_val in zip(inv_vid, np.linspace(z_start, z_end, steps))
         ],
     )
     return vid

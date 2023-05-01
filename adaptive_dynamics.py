@@ -1,7 +1,9 @@
 import streamlit as st
-from dynamical_system import invasion_fitness, invasion_fitness2, invasion_fitness3
+from dynamical_system import invasion_fitness, invasion_fitness2, invasion_fitness3, pop_dynamics2
 import numpy as np
 from tools import plot_3D_invfitness, plot_invasionfitness, make_interactive_video, plot_PIP
+from scipy.integrate import solve_ivp
+import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 st.title("Adaptive dynamics")
@@ -36,9 +38,10 @@ alpha = 0.4
 X, Y = np.meshgrid(zlist, zlist)
 inv_fitness3D = invasion_fitness(X, Y, pars=alpha)
 
+st.write("Invasion process video")
 
 st.plotly_chart(
-    make_interactive_video(0.01, zlist[-1], 0.03, zlist, invasion_fitness, alpha, [-2, 2])
+    make_interactive_video(0.01, zlist[-1], 50, zlist, invasion_fitness, alpha, [-2, 2])
 )
 
 
@@ -88,26 +91,70 @@ The value of $\beta$ affect the shape of the cost
 )
 zlist = np.linspace(0, 1, 100)
 
-beta = st.slider(r"Value of $\beta$", 0.1, 2.0, value=1.2, step=0.2)
+col_par1, col_par2 = st.columns(2, gap="large")
+with col_par1:
+    beta = st.slider(r"Value of $\beta$", 0.1, 2.0, value=1.2, step=0.01)
+with col_par2:
+    z_val = st.slider("Trait value", 0.0, 1.0, value=0.1, step=0.01)
+
+z_star = (1 / beta) ** (1 / (beta - 1))
+
+ndsol = solve_ivp(
+    pop_dynamics2,
+    (0, 550),
+    [np.random.uniform(0, 0.05)],
+    t_eval=np.linspace(0, 550, 200),
+    args=((alpha, beta, z_val),),
+)
+
 col5, col6 = st.columns(2, gap="large")
 with col5:
+    if ndsol.y[0, -1] > 0:
+        st.write("The population density reaches", ndsol.y[0, -1])
+    else:
+        st.write("The population density reaches", 0)
     st.plotly_chart(
-        make_interactive_video(
-            0.1, zlist[-1], 0.01, zlist, invasion_fitness2, (alpha, beta), [-0.2, 0.2]
-        )
+        go.Figure(
+            data=go.Scatter(x=ndsol.t, y=ndsol.y[0, :], mode="lines"),
+            layout=go.Layout(
+                xaxis_title="Time", yaxis_title="Population dynamics", yaxis=dict(range=(0, 0.3))
+            ),
+        ),
     )
 with col6:
-    zm2 = st.slider("Mutant trait value  ", 0.0, 1.0, value=0.1, step=0.01)
+    st.plotly_chart(
+        go.Figure(
+            data=[
+                go.Scatter(x=zlist, y=zlist, name="Intrinsic growth rate"),
+                go.Scatter(x=zlist, y=zlist**beta, name="Cost on mortality"),
+            ]
+        )
+    )
+
+col7, col8 = st.columns(2, gap="large")
+with col7:
+    st.write("Invasion process video")
+    z_start = st.number_input(
+        "Enter the start value of z then click play", 1e-5, 1.0, 0.1, step=0.01
+    )
+    st.plotly_chart(
+        make_interactive_video(
+            z_start, z_star, 20, zlist, invasion_fitness2, (alpha, beta), [-0.2, 0.2]
+        )
+    )
+with col8:
+    zm2 = st.slider("Mutant trait value", 0.0, 1.0, value=0.1, step=0.01)
+
     st.plotly_chart(plot_invasionfitness(zm2, zlist, invasion_fitness2, (alpha, beta), [-0.2, 0.2]))
 
 X, Y = np.meshgrid(zlist, zlist)
 inv_fitness3D2 = invasion_fitness2(X, Y, pars=(alpha, beta))
 
-col7, col8 = st.columns(2, gap="large")
+col9, col10 = st.columns(2, gap="large")
 range = (np.min(inv_fitness3D2) - np.mean(inv_fitness3D2) - 1e-5, np.max(inv_fitness3D2))
-with col7:
+with col9:
     st.plotly_chart(plot_3D_invfitness(zlist, inv_fitness3D2, zm, range))
-with col8:
+with col10:
     st.plotly_chart(plot_PIP(zlist, invasion_fitness2, (alpha, beta)))
 
 
