@@ -41,7 +41,8 @@ inv_fitness3D = invasion_fitness(X, Y, pars=alpha)
 st.write("Invasion process video")
 
 st.plotly_chart(
-    make_interactive_video(0.01, zlist[-1], 50, zlist, invasion_fitness, alpha, [-2, 2])
+    make_interactive_video(
+        0.01, zlist[-1], 50, zlist, invasion_fitness, alpha, [-2, 2])
 )
 
 
@@ -68,7 +69,8 @@ zm = st.slider("Mutant trait value", 0.0, 2.0, value=0.2, step=0.01)
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.plotly_chart(plot_invasionfitness(zm, zlist, invasion_fitness, alpha, [-2, 2]))
+    st.plotly_chart(plot_invasionfitness(
+        zm, zlist, invasion_fitness, alpha, [-2, 2]))
 with col2:
     st.plotly_chart(plot_PIP(zlist, invasion_fitness, alpha))
 with col3:
@@ -110,7 +112,8 @@ ndsol = solve_ivp(
 col5, col6 = st.columns(2, gap="large")
 with col5:
     if ndsol.y[0, -1] > 0:
-        st.write("The population density reaches", ndsol.y[0, -1])
+        st.write(
+            r"The population density reaches $\frac{z_r - z_r^\beta}{\alpha}$ = ", ndsol.y[0, -1])
     else:
         st.write("The population density reaches", 0)
     st.plotly_chart(
@@ -131,34 +134,58 @@ with col6:
         )
     )
 
-col7, col8 = st.columns(2, gap="large")
-with col7:
-    st.write("Invasion process video")
-    z_start = st.number_input(
-        "Enter the start value of z then click play", 1e-5, 1.0, 0.1, step=0.01
-    )
+st.write("Invasion process video")
+z_start = st.number_input(
+    "Enter the start value of z then click play", 1e-5, 1.0, 0.1, step=0.01
+)
+if z_start - z_start**beta < 0:
+    st.markdown(":red[POPULATION GOES EXTINCT]")
+else:
+    if beta > 1:
+        z_end = z_star
+    elif beta < 1:
+        zlist = np.linspace(0, 2, 100)
+        z_end = zlist[-1]
     st.plotly_chart(
         make_interactive_video(
-            z_start, z_star, 20, zlist, invasion_fitness2, (alpha, beta), [-0.2, 0.2]
+            z_start, z_end, 20, zlist, invasion_fitness2, (alpha, beta), [
+                -0.2, 0.2]
         )
     )
-with col8:
+
+st.write(" ")
+st.write("Now try yourself with the step by step invasion replacement process to verify the video")
+col7, col8, col9 = st.columns(3, gap="large")
+
+with col7:
     zm2 = st.slider("Mutant trait value", 0.0, 1.0, value=0.1, step=0.01)
 
-    st.plotly_chart(plot_invasionfitness(zm2, zlist, invasion_fitness2, (alpha, beta), [-0.2, 0.2]))
+    st.plotly_chart(plot_invasionfitness(
+        zm2, zlist, invasion_fitness2, (alpha, beta), [-0.2, 0.2]))
 
 X, Y = np.meshgrid(zlist, zlist)
 inv_fitness3D2 = invasion_fitness2(X, Y, pars=(alpha, beta))
 
-col9, col10 = st.columns(2, gap="large")
-range = (np.min(inv_fitness3D2) - np.mean(inv_fitness3D2) - 1e-5, np.max(inv_fitness3D2))
+range = (np.min(inv_fitness3D2) - np.mean(inv_fitness3D2) -
+         1e-5, np.max(inv_fitness3D2))
+with col8:
+    st.plotly_chart(plot_PIP(zlist, invasion_fitness2, (alpha, beta)))
 with col9:
     st.plotly_chart(plot_3D_invfitness(zlist, inv_fitness3D2, zm, range))
-with col10:
-    st.plotly_chart(plot_PIP(zlist, invasion_fitness2, (alpha, beta)))
-
 
 st.header("Assymetric competition")
+
+st.write(r"""
+Assymetric competition results in evolutionary branching
+
+Now the intrinsic growth rate is no longer a linear function of the trait z. It follows a Gaussian distribution.
+
+$\frac{dn_r}{dt} = (\rho(z) - \alpha(\delta_z) n_r) n_r$
+
+where $\rho(z) = e^{-(z - z_0)^2}$ is a Gaussian function.
+
+
+""")
 zlist = np.linspace(-3, 3, 100)
 inv_fitness3D3 = invasion_fitness3(zlist, zlist, (0, 1.4))
 zm3 = st.slider("Mutant trait value", -3.0, 3.0, 0.1)
