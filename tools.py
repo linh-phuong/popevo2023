@@ -130,7 +130,7 @@ def plot_invasionfitness(zm, zlist, fitness_func, pars, range):
     fig.add_hline(y=0, line_dash="dash")
     fig.update_layout(
         title="Interactive invasion process",
-        xaxis=dict(range=[0, zlist[-1]], autorange=False),
+        xaxis=dict(range=[zlist[0], zlist[-1]], autorange=False),
         yaxis=dict(range=range, autorange=False),
         autosize=False,
         width=450,

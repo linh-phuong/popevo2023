@@ -160,5 +160,7 @@ with col10:
 
 st.header("Assymetric competition")
 zlist = np.linspace(-3, 3, 100)
-inv_fitness3D3 = invasion_fitness3(zlist, zlist, (0, 2.4))
-st.plotly_chart(plot_PIP(zlist, invasion_fitness3, (0, 2.4)))
+inv_fitness3D3 = invasion_fitness3(zlist, zlist, (0, 1.4))
+zm3 = st.slider("Mutant trait value", -3.0, 3.0, 0.1)
+st.plotly_chart(plot_invasionfitness(zm3, zlist, invasion_fitness3, (0, 1.4), (-1, 1)))
+st.plotly_chart(plot_PIP(zlist, invasion_fitness3, (0, 1.4)))
