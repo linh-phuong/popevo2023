@@ -47,11 +47,8 @@ def pop_dynamics2(t, n, pars):
 def invasion_fitness3(z, zm, pars):
     z0, k = pars
     r = np.exp(-((z - z0) ** 2) / 2)
-    # a = 1 / 2
-    # n_res = r / a
-    # rm = np.exp(-((zm - z0) ** 2) / 2)
-    # am = 1 - 1 / (1 + np.exp(-k * (zm - z)))
     n_res = r
     rm = np.exp(-((zm - z0) ** 2) / 2)
     am = np.exp(-((zm - z) ** 2) / k)
     return rm - am * n_res
+    
